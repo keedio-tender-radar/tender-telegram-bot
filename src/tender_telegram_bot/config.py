@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     top_limit: int = 5
     urgent_days: int = 7
 
+    # Webhook (recomendado con scale-to-zero). Si public_url está definido, el bot usa webhook
+    # en {public_url}/webhook; si no, cae a polling (se duerme si la máquina escala a cero).
+    public_url: str = ""
+    webhook_secret: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 
