@@ -43,6 +43,17 @@ class TenderApiClient:
             resp.raise_for_status()
             return resp.json()
 
+    def ask(self, tender_id: str, question: str, top_k: int = 3) -> dict:
+        """Pregunta sobre el pliego (visual-rag o extractivo, según configuración de la API)."""
+        with self._client() as client:
+            resp = client.post(
+                f"/api/tenders/{tender_id}/ask",
+                json={"question": question, "top_k": top_k},
+                timeout=120,
+            )
+            resp.raise_for_status()
+            return resp.json()
+
     def post_action(
         self, tender_id: str, action: str, *, actor: str | None = None, note: str | None = None
     ) -> dict:

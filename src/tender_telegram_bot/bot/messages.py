@@ -83,6 +83,14 @@ def ficha_link(dashboard_url: str | None, tender_id: str) -> str:
     return f"{dashboard_url.rstrip('/')}/tenders/{tender_id}" if dashboard_url else ""
 
 
+def format_answer(question: str, result: dict) -> str:
+    """Formatea la respuesta de /ask (visual-rag o extractivo) para Telegram."""
+    answer = result.get("answer") or "No encontré una respuesta en el pliego."
+    n = len(result.get("sources") or [])
+    footer = f"motor: {result.get('backend', '?')} · {n} fuente(s)"
+    return "\n".join([f"❓ {question}", "", answer, "", footer])
+
+
 def format_urgent(tw: dict) -> str:
     t = tw.get("tender", {})
     s = tw.get("score")

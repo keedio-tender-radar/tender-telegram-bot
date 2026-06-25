@@ -47,3 +47,15 @@ def test_format_detail_without_score():
     tw = tender_with_score("a", score=None)
     out = messages.format_tender_detail(tw["tender"], None)
     assert "Score" not in out
+
+
+def test_format_answer():
+    from tender_telegram_bot.bot.messages import format_answer
+
+    out = format_answer(
+        "¿Solvencia?",
+        {"answer": "Tres proyectos.", "backend": "fake+llm", "sources": [{"page": 1}]},
+    )
+    assert "¿Solvencia?" in out
+    assert "Tres proyectos." in out
+    assert "fake+llm" in out

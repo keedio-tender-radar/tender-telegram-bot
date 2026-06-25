@@ -26,6 +26,7 @@ _HELP = (
     "/top — mejores oportunidades\n"
     "/urgentes — cierres próximos\n"
     "/licitacion <id> — ficha\n"
+    "/preguntar <id> <pregunta> — pregunta al pliego\n"
     "/ayuda — esta ayuda"
 )
 
@@ -104,6 +105,22 @@ async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception:  # noqa: BLE001
         score = None
     text = messages.format_tender_detail(tender, score)
+    link = messages.ficha_link(settings.dashboard_url, tender_id)
+    if link:
+        text += f"\n🔗 {link}"
+    await update.effective_chat.send_message(text, disable_web_page_preview=True)
+
+
+@safe
+async def cmd_preguntar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if len(context.args) < 2:
+        await update.effective_chat.send_message("Uso: /preguntar <id> <pregunta>")
+        return
+    tender_id = context.args[0]
+    question = " ".join(context.args[1:])
+    await update.effective_chat.send_message("🔎 Consultando el pliego…")
+    result = TenderApiClient().ask(tender_id, question)
+    text = messages.format_answer(question, result)
     link = messages.ficha_link(settings.dashboard_url, tender_id)
     if link:
         text += f"\n🔗 {link}"
