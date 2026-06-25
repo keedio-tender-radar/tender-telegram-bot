@@ -15,10 +15,13 @@ class FakeApi:
 
 def test_build_daily_summary(items):
     summary = build_daily_summary(FakeApi(top=items))
-    assert "TOP oportunidades" in summary["header"]
+    # cabecera CORTA (no repite la lista completa)
+    assert "oportunidad" in summary["header"].lower()
+    assert "1. Plataforma" not in summary["header"]
     assert [i["tender_id"] for i in summary["items"]] == ["a", "b"]
-    # cada item lleva sus botones inline con el tender_id codificado
+    # cada item lleva sus botones inline + enlace al panel (ficha)
     assert summary["items"][0]["buttons"][0][0][1] == "action:interested:a"
+    assert "/tenders/a" in summary["items"][0]["text"]
 
 
 def test_build_daily_summary_empty():

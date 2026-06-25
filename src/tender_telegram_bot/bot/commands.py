@@ -1,6 +1,13 @@
-"""Comandos del bot. Cada comando consulta tender-api y formatea con messages/keyboards."""
+"""Comandos del bot. Cada comando consulta tender-api y formatea con messages/keyboards.
+
+Todos los comandos son robustos: si algo falla, responden con un mensaje claro en vez de quedar
+en silencio (un handler que lanza sin responder deja al usuario sin feedback).
+"""
 
 from __future__ import annotations
+
+import functools
+import logging
 
 from telegram import Update
 from telegram.ext import ContextTypes
@@ -8,7 +15,10 @@ from telegram.ext import ContextTypes
 from tender_telegram_bot.bot import messages
 from tender_telegram_bot.bot.handlers import to_markup
 from tender_telegram_bot.clients.tender_api_client import TenderApiClient
+from tender_telegram_bot.config import settings
 from tender_telegram_bot.jobs.daily_summary_job import build_daily_summary, build_urgent_alerts
+
+logger = logging.getLogger("tender_telegram_bot")
 
 _HELP = (
     "Keedio Tender Radar\n"
@@ -20,10 +30,27 @@ _HELP = (
 )
 
 
+def safe(handler):
+    """Captura errores del comando y responde con un mensaje (evita fallos en silencio)."""
+
+    @functools.wraps(handler)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        try:
+            await handler(update, context)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("Error en %s", handler.__name__)
+            if update.effective_chat:
+                await update.effective_chat.send_message(f"⚠️ No se pudo completar: {exc}")
+
+    return wrapper
+
+
+@safe
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_chat.send_message("Bot de Keedio Tender Radar listo.\n\n" + _HELP)
 
 
+@safe
 async def cmd_ayuda(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_chat.send_message(_HELP)
 
@@ -31,19 +58,24 @@ async def cmd_ayuda(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def _send_summary(update: Update) -> None:
     summary = build_daily_summary(TenderApiClient())
     chat = update.effective_chat
-    await chat.send_message(summary["header"])
+    await chat.send_message(summary["header"], disable_web_page_preview=True)
     for item in summary["items"]:
-        await chat.send_message(item["text"], reply_markup=to_markup(item["buttons"]))
+        await chat.send_message(
+            item["text"], reply_markup=to_markup(item["buttons"]), disable_web_page_preview=True
+        )
 
 
+@safe
 async def cmd_resumen(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _send_summary(update)
 
 
+@safe
 async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _send_summary(update)
 
 
+@safe
 async def cmd_urgentes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     alerts = build_urgent_alerts(TenderApiClient())
     if not alerts:
@@ -51,10 +83,11 @@ async def cmd_urgentes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     for alert in alerts:
         await update.effective_chat.send_message(
-            alert["text"], reply_markup=to_markup(alert["buttons"])
+            alert["text"], reply_markup=to_markup(alert["buttons"]), disable_web_page_preview=True
         )
 
 
+@safe
 async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not context.args:
         await update.effective_chat.send_message("Uso: /licitacion <id>")
@@ -70,4 +103,8 @@ async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         score = api.get_score(tender_id)
     except Exception:  # noqa: BLE001
         score = None
-    await update.effective_chat.send_message(messages.format_tender_detail(tender, score))
+    text = messages.format_tender_detail(tender, score)
+    link = messages.ficha_link(settings.dashboard_url, tender_id)
+    if link:
+        text += f"\n🔗 {link}"
+    await update.effective_chat.send_message(text, disable_web_page_preview=True)

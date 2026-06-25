@@ -67,6 +67,22 @@ def format_daily_digest(items: list[dict], stats: dict | None = None) -> str:
     return "\n".join(head) + "\n" + "\n\n".join(blocks)
 
 
+def format_digest_header(items: list[dict], dashboard_url: str | None = None) -> str:
+    """Cabecera CORTA del radar (sin repetir la lista; el detalle va en los items y el panel)."""
+    n = len(items)
+    if n == 0:
+        msg = "📊 Keedio Tender Radar — hoy no hay oportunidades destacadas."
+    else:
+        msg = f"📊 Keedio Tender Radar — {n} oportunidad(es) destacada(s):"
+    if dashboard_url:
+        msg += f"\n🔗 Panel: {dashboard_url}"
+    return msg
+
+
+def ficha_link(dashboard_url: str | None, tender_id: str) -> str:
+    return f"{dashboard_url.rstrip('/')}/tenders/{tender_id}" if dashboard_url else ""
+
+
 def format_urgent(tw: dict) -> str:
     t = tw.get("tender", {})
     s = tw.get("score")
