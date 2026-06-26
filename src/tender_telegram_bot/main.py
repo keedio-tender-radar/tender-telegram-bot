@@ -33,6 +33,7 @@ def build_application() -> Application:
     app.add_handler(CommandHandler("resumen", commands.cmd_resumen))
     app.add_handler(CommandHandler("top", commands.cmd_top))
     app.add_handler(CommandHandler("urgentes", commands.cmd_urgentes))
+    app.add_handler(CommandHandler("estado", commands.cmd_estado))
     app.add_handler(CommandHandler("licitacion", commands.cmd_licitacion))
     app.add_handler(CommandHandler("preguntar", commands.cmd_preguntar))
     app.add_handler(CallbackQueryHandler(on_action))

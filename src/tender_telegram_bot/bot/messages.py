@@ -94,6 +94,22 @@ def format_answer(question: str, result: dict) -> str:
     return "\n".join([f"❓ {question}", "", answer, "", footer])
 
 
+def format_stats(stats: dict) -> str:
+    """Resumen de estado del sistema para /estado."""
+    by_source = stats.get("by_source", {}) or {}
+    fuentes = " · ".join(f"{k}: {v}" for k, v in by_source.items()) or "—"
+    ingested = stats.get("last_ingested_at") or "nunca"
+    scored = stats.get("last_scored_at") or "nunca"
+    return (
+        "📡 Estado del radar\n\n"
+        f"Licitaciones: {stats.get('total', 0)} · Puntuadas: {stats.get('scored_count', 0)}\n"
+        f"🟢 GO: {stats.get('go_count', 0)} · Score medio: {stats.get('avg_score', 0)}\n"
+        f"Fuentes → {fuentes}\n"
+        f"Última ingesta: {ingested[:16].replace('T', ' ')}\n"
+        f"Último scoring: {scored[:16].replace('T', ' ')}"
+    )
+
+
 def format_alert(tw: dict) -> str:
     """Alerta de oportunidad prioritaria (GO recién detectada)."""
     t = tw.get("tender", {})

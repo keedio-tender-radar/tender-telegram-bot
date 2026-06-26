@@ -27,6 +27,7 @@ _HELP = (
     "/urgentes — cierres próximos\n"
     "/licitacion <id> — ficha\n"
     "/preguntar <id> <pregunta> — pregunta al pliego\n"
+    "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
 )
 
@@ -79,6 +80,12 @@ async def cmd_resumen(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 @safe
 async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _send_summary(update)
+
+
+@safe
+async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    stats = TenderApiClient().get_stats()
+    await update.effective_chat.send_message(messages.format_stats(stats))
 
 
 @safe

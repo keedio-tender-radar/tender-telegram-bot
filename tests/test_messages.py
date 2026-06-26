@@ -59,3 +59,17 @@ def test_format_answer():
     assert "¿Solvencia?" in out
     assert "Tres proyectos." in out
     assert "fake+llm" in out
+
+
+def test_format_stats():
+    from tender_telegram_bot.bot.messages import format_stats
+
+    out = format_stats({
+        "total": 23, "scored_count": 18, "go_count": 4, "avg_score": 71,
+        "by_source": {"placsp": 8, "ted": 15},
+        "last_ingested_at": "2026-06-26T06:01:00+00:00",
+        "last_scored_at": "2026-06-26T06:31:00+00:00",
+    })
+    assert "Estado del radar" in out
+    assert "GO: 4" in out
+    assert "placsp: 8" in out
