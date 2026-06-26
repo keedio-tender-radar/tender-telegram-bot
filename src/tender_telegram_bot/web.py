@@ -118,6 +118,33 @@ async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
     return {"sent": sent}
 
 
+@app.post("/send-reminders")
+async def send_reminders(x_run_token: str | None = Header(default=None)) -> dict:
+    """Recuerda los cierres próximos de licitaciones en seguimiento (interested/partner)."""
+    if settings.run_token and x_run_token != settings.run_token:
+        raise HTTPException(401, "Token de ejecución inválido o ausente.")
+    if not settings.telegram_chat_id:
+        raise HTTPException(400, "Falta TELEGRAM_CHAT_ID.")
+    if _application is None:
+        raise HTTPException(503, "Bot no inicializado.")
+    api = TenderApiClient()
+    chat = settings.telegram_chat_id
+    sent = 0
+    for tw in api.get_closing_soon():
+        tid = tw.get("tender", {}).get("id", "")
+        text = "⏰ Cierre próximo (en seguimiento)\n\n" + messages.format_urgent(tw)
+        link = messages.ficha_link(settings.dashboard_url, tid)
+        await _application.bot.send_message(
+            chat, f"{text}\n🔗 {link}" if link else text, disable_web_page_preview=True
+        )
+        try:
+            api.mark_reminded(tid)
+        except Exception:  # noqa: BLE001
+            pass
+        sent += 1
+    return {"sent": sent}
+
+
 @app.post("/webhook")
 async def webhook(request: Request) -> dict:
     if settings.webhook_secret:

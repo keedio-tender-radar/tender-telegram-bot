@@ -27,6 +27,7 @@ _HELP = (
     "/urgentes — cierres próximos\n"
     "/licitacion <id> — ficha\n"
     "/preguntar <id> <pregunta> — pregunta al pliego\n"
+    "/buscar <palabras> — busca licitaciones\n"
     "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
 )
@@ -86,6 +87,26 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     stats = TenderApiClient().get_stats()
     await update.effective_chat.send_message(messages.format_stats(stats))
+
+
+@safe
+async def cmd_buscar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.effective_chat.send_message("Uso: /buscar <palabras>")
+        return
+    q = " ".join(context.args)
+    results = TenderApiClient().search(q)
+    if not results:
+        await update.effective_chat.send_message(f"Sin resultados para «{q}».")
+        return
+    chat = update.effective_chat
+    await chat.send_message(f'🔎 Resultados para «{q}»:')
+    for i, tw in enumerate(results):
+        await chat.send_message(
+            messages.format_item(tw, i + 1)
+            + (f"\n🔗 {messages.ficha_link(settings.dashboard_url, tw['tender']['id'])}"),
+            disable_web_page_preview=True,
+        )
 
 
 @safe

@@ -41,6 +41,24 @@ class TenderApiClient:
             resp.raise_for_status()
             return resp.json()
 
+    def search(self, q: str, limit: int = 5) -> list[dict]:
+        with self._client() as client:
+            resp = client.get(
+                "/api/tenders/search", params={"q": q, "order": "score", "limit": limit}
+            )
+            resp.raise_for_status()
+            return resp.json()
+
+    def get_closing_soon(self, days: int = 7) -> list[dict]:
+        with self._client() as client:
+            resp = client.get("/api/tenders/closing-soon", params={"days": days})
+            resp.raise_for_status()
+            return resp.json()
+
+    def mark_reminded(self, tender_id: str) -> None:
+        with self._client() as client:
+            client.post(f"/api/tenders/{tender_id}/mark-reminded").raise_for_status()
+
     def mark_alerted(self, tender_id: str) -> None:
         with self._client() as client:
             client.post(f"/api/tenders/{tender_id}/mark-alerted").raise_for_status()
