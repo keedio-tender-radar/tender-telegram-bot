@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     public_url: str = ""
     webhook_secret: str = ""
 
+    # Token que protege el envío programado del radar (POST /send-digest desde el scheduler).
+    run_token: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
 

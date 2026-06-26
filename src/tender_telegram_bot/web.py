@@ -10,10 +10,13 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from telegram import Update
 
+from tender_telegram_bot.bot.handlers import to_markup
+from tender_telegram_bot.clients.tender_api_client import TenderApiClient
 from tender_telegram_bot.config import settings
+from tender_telegram_bot.jobs.daily_summary_job import build_daily_summary
 from tender_telegram_bot.main import build_application
 
 logger = logging.getLogger("tender_telegram_bot")
@@ -63,6 +66,27 @@ def health() -> dict:
     else:
         mode = "off"
     return {"status": "ok", "service": settings.app_name, "version": settings.version, "mode": mode}
+
+
+@app.post("/send-digest")
+async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
+    """Envía el radar diario al chat configurado (TELEGRAM_CHAT_ID). Para el scheduler."""
+    if settings.run_token and x_run_token != settings.run_token:
+        raise HTTPException(401, "Token de ejecución inválido o ausente.")
+    if not settings.telegram_chat_id:
+        raise HTTPException(400, "Falta TELEGRAM_CHAT_ID (destino del radar).")
+    if _application is None:
+        raise HTTPException(503, "Bot no inicializado.")
+    summary = build_daily_summary(TenderApiClient())
+    chat = settings.telegram_chat_id
+    bot = _application.bot
+    await bot.send_message(chat, summary["header"], disable_web_page_preview=True)
+    for item in summary["items"]:
+        await bot.send_message(
+            chat, item["text"], reply_markup=to_markup(item["buttons"]),
+            disable_web_page_preview=True,
+        )
+    return {"sent": len(summary["items"]) + 1, "chat_id": chat}
 
 
 @app.post("/webhook")

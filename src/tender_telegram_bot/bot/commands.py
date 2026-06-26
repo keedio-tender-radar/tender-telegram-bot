@@ -48,7 +48,12 @@ def safe(handler):
 
 @safe
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.effective_chat.send_message("Bot de Keedio Tender Radar listo.\n\n" + _HELP)
+    chat = update.effective_chat
+    await chat.send_message(
+        "Bot de Keedio Tender Radar listo.\n\n"
+        + _HELP
+        + f"\n\n(Para el radar diario automático, este chat_id es: {chat.id})"
+    )
 
 
 @safe
