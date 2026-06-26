@@ -28,6 +28,17 @@ class TenderApiClient:
             resp.raise_for_status()
             return resp.json()
 
+    def get_pending_alerts(self, limit: int = 10) -> list[dict]:
+        """Oportunidades GO aún no alertadas (para el push inmediato)."""
+        with self._client() as client:
+            resp = client.get("/api/tenders/pending-alerts", params={"limit": limit})
+            resp.raise_for_status()
+            return resp.json()
+
+    def mark_alerted(self, tender_id: str) -> None:
+        with self._client() as client:
+            client.post(f"/api/tenders/{tender_id}/mark-alerted").raise_for_status()
+
     def get_tender(self, tender_id: str) -> dict:
         with self._client() as client:
             resp = client.get(f"/api/tenders/{tender_id}")

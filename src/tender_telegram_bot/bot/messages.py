@@ -94,6 +94,20 @@ def format_answer(question: str, result: dict) -> str:
     return "\n".join([f"❓ {question}", "", answer, "", footer])
 
 
+def format_alert(tw: dict) -> str:
+    """Alerta de oportunidad prioritaria (GO recién detectada)."""
+    t = tw.get("tender", {})
+    s = tw.get("score")
+    score_txt = f"{s['total']}/100" if s else "?"
+    return (
+        "🟢 Nueva oportunidad prioritaria (GO)\n\n"
+        f"{t.get('title', '(sin título)')}\n"
+        f"Score: {score_txt} · Fuente: {t.get('source', '?')}\n"
+        f"Presupuesto: {_money(t.get('budget_amount'), t.get('currency', 'EUR'))}"
+        f" · Plazo: {_date(t.get('deadline'))}"
+    )
+
+
 def format_urgent(tw: dict) -> str:
     t = tw.get("tender", {})
     s = tw.get("score")

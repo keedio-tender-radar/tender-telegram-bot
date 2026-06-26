@@ -13,6 +13,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Header, HTTPException, Request
 from telegram import Update
 
+from tender_telegram_bot.bot import keyboards, messages
 from tender_telegram_bot.bot.handlers import to_markup
 from tender_telegram_bot.clients.tender_api_client import TenderApiClient
 from tender_telegram_bot.config import settings
@@ -87,6 +88,34 @@ async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
             disable_web_page_preview=True,
         )
     return {"sent": len(summary["items"]) + 1, "chat_id": chat}
+
+
+@app.post("/send-alerts")
+async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
+    """Envía alertas inmediatas de oportunidades GO no alertadas y las marca como alertadas."""
+    if settings.run_token and x_run_token != settings.run_token:
+        raise HTTPException(401, "Token de ejecución inválido o ausente.")
+    if not settings.telegram_chat_id:
+        raise HTTPException(400, "Falta TELEGRAM_CHAT_ID (destino de las alertas).")
+    if _application is None:
+        raise HTTPException(503, "Bot no inicializado.")
+    api = TenderApiClient()
+    pending = api.get_pending_alerts()
+    chat = settings.telegram_chat_id
+    sent = 0
+    for tw in pending:
+        tid = tw.get("tender", {}).get("id", "")
+        await _application.bot.send_message(
+            chat, messages.format_alert(tw),
+            reply_markup=to_markup(keyboards.item_buttons(tid)),
+            disable_web_page_preview=True,
+        )
+        try:
+            api.mark_alerted(tid)
+        except Exception:  # noqa: BLE001 — no re-alertar es preferible a fallar
+            pass
+        sent += 1
+    return {"sent": sent}
 
 
 @app.post("/webhook")
