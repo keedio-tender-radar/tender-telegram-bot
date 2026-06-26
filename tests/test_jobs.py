@@ -35,3 +35,28 @@ def test_build_urgent_alerts(items):
     assert len(alerts) == 2
     assert "urgente" in alerts[0]["text"].lower()
     assert alerts[0]["tender_id"] == "a"
+
+
+def test_daily_summary_excludes_decided():
+    from tests.conftest import tender_with_score
+
+    top = [
+        tender_with_score("a", 95, "go", status="scored"),
+        tender_with_score("b", 90, "go", status="interested"),  # ya decidida → fuera
+        tender_with_score("c", 85, "go", status="discovered"),
+    ]
+    summary = build_daily_summary(FakeApi(top=top))
+    ids = [i["tender_id"] for i in summary["items"]]
+    assert ids == ["a", "c"]  # 'b' (interested) excluida
+
+
+def test_daily_summary_marks_new():
+    from datetime import UTC, datetime
+
+    from tests.conftest import tender_with_score
+
+    now = datetime.now(UTC).isoformat()
+    top = [tender_with_score("a", 95, "go", status="scored", created_at=now)]
+    summary = build_daily_summary(FakeApi(top=top))
+    assert summary["items"][0]["text"].startswith("🆕")
+    assert "🆕 1 nueva" in summary["header"]

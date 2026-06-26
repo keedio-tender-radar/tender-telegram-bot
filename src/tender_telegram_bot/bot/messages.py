@@ -67,13 +67,16 @@ def format_daily_digest(items: list[dict], stats: dict | None = None) -> str:
     return "\n".join(head) + "\n" + "\n\n".join(blocks)
 
 
-def format_digest_header(items: list[dict], dashboard_url: str | None = None) -> str:
+def format_digest_header(
+    items: list[dict], dashboard_url: str | None = None, new_count: int = 0
+) -> str:
     """Cabecera CORTA del radar (sin repetir la lista; el detalle va en los items y el panel)."""
     n = len(items)
     if n == 0:
-        msg = "📊 Keedio Tender Radar — hoy no hay oportunidades destacadas."
+        msg = "📊 Keedio Tender Radar — hoy no hay oportunidades accionables nuevas."
     else:
-        msg = f"📊 Keedio Tender Radar — {n} oportunidad(es) destacada(s):"
+        nuevas = f" · 🆕 {new_count} nueva(s)" if new_count else ""
+        msg = f"📊 Keedio Tender Radar — {n} oportunidad(es) por revisar{nuevas}:"
     if dashboard_url:
         msg += f"\n🔗 Panel: {dashboard_url}"
     return msg
