@@ -13,7 +13,12 @@ class Settings(BaseSettings):
 
     # Secretos: NUNCA en git. Inyectar por entorno / gestor de secretos.
     telegram_bot_token: str = ""
-    telegram_chat_id: str = ""  # canal/chat destino del radar diario
+    telegram_chat_id: str = ""  # destino(s) del radar; admite varios separados por coma
+
+    @property
+    def telegram_chat_ids(self) -> list[str]:
+        """Lista de chats destino (multi-destinatario): TELEGRAM_CHAT_ID coma-separado."""
+        return [c.strip() for c in self.telegram_chat_id.split(",") if c.strip()]
 
     top_limit: int = 5
     urgent_days: int = 7

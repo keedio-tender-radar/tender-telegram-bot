@@ -97,16 +97,17 @@ async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
     if _application is None:
         raise HTTPException(503, "Bot no inicializado.")
     summary = build_daily_summary(TenderApiClient())
-    chat = settings.telegram_chat_id
     bot = _application.bot
-    await bot.send_message(chat, summary["header"], disable_web_page_preview=True)
-    for item in summary["items"]:
-        await bot.send_message(
-            chat, item["text"], reply_markup=to_markup(item["buttons"]),
-            disable_web_page_preview=True,
-        )
+    chats = settings.telegram_chat_ids
+    for chat in chats:
+        await bot.send_message(chat, summary["header"], disable_web_page_preview=True)
+        for item in summary["items"]:
+            await bot.send_message(
+                chat, item["text"], reply_markup=to_markup(item["buttons"]),
+                disable_web_page_preview=True,
+            )
     _report_run("digest", "ok", count=len(summary["items"]))
-    return {"sent": len(summary["items"]) + 1, "chat_id": chat}
+    return {"sent": (len(summary["items"]) + 1) * len(chats), "chats": len(chats)}
 
 
 @app.post("/send-alerts")
@@ -120,22 +121,23 @@ async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
         raise HTTPException(503, "Bot no inicializado.")
     api = TenderApiClient()
     pending = api.get_pending_alerts()
-    chat = settings.telegram_chat_id
+    chats = settings.telegram_chat_ids
     sent = 0
     for tw in pending:
         tid = tw.get("tender", {}).get("id", "")
-        await _application.bot.send_message(
-            chat, messages.format_alert(tw),
-            reply_markup=to_markup(keyboards.item_buttons(tid, settings.dashboard_url)),
-            disable_web_page_preview=True,
-        )
+        for chat in chats:
+            await _application.bot.send_message(
+                chat, messages.format_alert(tw),
+                reply_markup=to_markup(keyboards.item_buttons(tid, settings.dashboard_url)),
+                disable_web_page_preview=True,
+            )
         try:
             api.mark_alerted(tid)
         except Exception:  # noqa: BLE001 — no re-alertar es preferible a fallar
             pass
         sent += 1
     _report_run("alertas", "ok", count=sent)
-    return {"sent": sent}
+    return {"sent": sent, "chats": len(chats)}
 
 
 @app.post("/send-reminders")
@@ -148,22 +150,23 @@ async def send_reminders(x_run_token: str | None = Header(default=None)) -> dict
     if _application is None:
         raise HTTPException(503, "Bot no inicializado.")
     api = TenderApiClient()
-    chat = settings.telegram_chat_id
+    chats = settings.telegram_chat_ids
     sent = 0
     for tw in api.get_closing_soon():
         tid = tw.get("tender", {}).get("id", "")
         text = "⏰ Cierre próximo (en seguimiento)\n\n" + messages.format_urgent(tw)
         link = messages.ficha_link(settings.dashboard_url, tid)
-        await _application.bot.send_message(
-            chat, f"{text}\n🔗 {link}" if link else text, disable_web_page_preview=True
-        )
+        for chat in chats:
+            await _application.bot.send_message(
+                chat, f"{text}\n🔗 {link}" if link else text, disable_web_page_preview=True
+            )
         try:
             api.mark_reminded(tid)
         except Exception:  # noqa: BLE001
             pass
         sent += 1
     _report_run("recordatorios", "ok", count=sent)
-    return {"sent": sent}
+    return {"sent": sent, "chats": len(chats)}
 
 
 @app.post("/webhook")
