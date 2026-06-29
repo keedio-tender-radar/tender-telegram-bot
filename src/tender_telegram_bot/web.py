@@ -69,6 +69,24 @@ def health() -> dict:
     return {"status": "ok", "service": settings.app_name, "version": settings.version, "mode": mode}
 
 
+def _report_run(job: str, status: str, count: int | None = None, detail: str | None = None) -> None:
+    """Reporta el resultado del envío a tender-api (/api/runs) para observabilidad. Best-effort."""
+    if not settings.api_url:
+        return
+    try:
+        import httpx
+
+        headers = {"X-Run-Token": settings.run_token} if settings.run_token else {}
+        httpx.post(
+            f"{settings.api_url.rstrip('/')}/api/runs",
+            json={"job": job, "status": status, "count": count, "detail": detail},
+            headers=headers,
+            timeout=10,
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
+
 @app.post("/send-digest")
 async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
     """Envía el radar diario al chat configurado (TELEGRAM_CHAT_ID). Para el scheduler."""
@@ -87,6 +105,7 @@ async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
             chat, item["text"], reply_markup=to_markup(item["buttons"]),
             disable_web_page_preview=True,
         )
+    _report_run("digest", "ok", count=len(summary["items"]))
     return {"sent": len(summary["items"]) + 1, "chat_id": chat}
 
 
@@ -115,6 +134,7 @@ async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
         except Exception:  # noqa: BLE001 — no re-alertar es preferible a fallar
             pass
         sent += 1
+    _report_run("alertas", "ok", count=sent)
     return {"sent": sent}
 
 
@@ -142,6 +162,7 @@ async def send_reminders(x_run_token: str | None = Header(default=None)) -> dict
         except Exception:  # noqa: BLE001
             pass
         sent += 1
+    _report_run("recordatorios", "ok", count=sent)
     return {"sent": sent}
 
 
