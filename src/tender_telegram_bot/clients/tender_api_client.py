@@ -41,6 +41,13 @@ class TenderApiClient:
             resp.raise_for_status()
             return resp.json()
 
+    def get_alert_matches(self, days: int = 1) -> list[dict]:
+        """Licitaciones recientes que cumplen alguna alerta guardada."""
+        with self._client() as client:
+            resp = client.get("/api/alerts/matches", params={"days": days})
+            resp.raise_for_status()
+            return resp.json()
+
     def search(self, q: str, limit: int = 5) -> list[dict]:
         with self._client() as client:
             resp = client.get(

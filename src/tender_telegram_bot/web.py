@@ -169,6 +169,34 @@ async def send_reminders(x_run_token: str | None = Header(default=None)) -> dict
     return {"sent": sent, "chats": len(chats)}
 
 
+@app.post("/send-saved-alerts")
+async def send_saved_alerts(
+    x_run_token: str | None = Header(default=None), days: int = 1
+) -> dict:
+    """Notifica las licitaciones recientes que cumplen alguna alerta a medida guardada."""
+    if settings.run_token and x_run_token != settings.run_token:
+        raise HTTPException(401, "Token de ejecución inválido o ausente.")
+    if _application is None:
+        raise HTTPException(503, "Bot no inicializado.")
+    chats = settings.telegram_chat_ids
+    matches = TenderApiClient().get_alert_matches(days)
+    sent = 0
+    for m in matches:
+        tw = {"tender": m["tender"], "score": m.get("score")}
+        tid = m["tender"].get("id", "")
+        head = "🔔 Coincide con tu alerta: " + ", ".join(m.get("alerts", []))
+        text = f"{head}\n\n{messages.format_alert(tw)}"
+        for chat in chats:
+            await _application.bot.send_message(
+                chat, text,
+                reply_markup=to_markup(keyboards.item_buttons(tid, settings.dashboard_url)),
+                disable_web_page_preview=True,
+            )
+        sent += 1
+    _report_run("alertas-guardadas", "ok", count=sent)
+    return {"sent": sent, "chats": len(chats)}
+
+
 @app.post("/webhook")
 async def webhook(request: Request) -> dict:
     if settings.webhook_secret:
