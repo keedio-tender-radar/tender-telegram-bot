@@ -19,13 +19,14 @@ _ACTION_FEEDBACK = {
 
 
 def to_markup(buttons: list[list[tuple[str, str]]]) -> InlineKeyboardMarkup:
-    """Convierte filas de (label, callback_data) en un teclado inline de Telegram."""
-    return InlineKeyboardMarkup(
-        [
-            [InlineKeyboardButton(label, callback_data=data) for label, data in row]
-            for row in buttons
-        ]
-    )
+    """Convierte filas de (label, data) en un teclado inline. data http(s) = botón-enlace."""
+
+    def _btn(label: str, data: str) -> InlineKeyboardButton:
+        if data.startswith(("http://", "https://")):
+            return InlineKeyboardButton(label, url=data)
+        return InlineKeyboardButton(label, callback_data=data)
+
+    return InlineKeyboardMarkup([[_btn(label, data) for label, data in row] for row in buttons])
 
 
 async def on_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

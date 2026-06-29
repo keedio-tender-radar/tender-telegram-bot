@@ -34,7 +34,13 @@ def parse_callback(data: str) -> tuple[str, str] | None:
     return action, tender_id
 
 
-def item_buttons(tender_id: str) -> list[list[tuple[str, str]]]:
-    """Filas de botones (etiqueta, callback_data) para una oportunidad. 2 por fila."""
+def item_buttons(tender_id: str, dashboard_url: str = "") -> list[list[tuple[str, str]]]:
+    """Filas de botones (etiqueta, callback_data) para una oportunidad. 2 por fila.
+
+    Si hay `dashboard_url`, añade un botón-enlace «📄 Ficha» a la web (callback_data = URL http).
+    """
     flat = [(label, callback_data(action, tender_id)) for label, action in _BUTTONS]
-    return [flat[i : i + 2] for i in range(0, len(flat), 2)]
+    rows = [flat[i : i + 2] for i in range(0, len(flat), 2)]
+    if dashboard_url:
+        rows.append([("📄 Ficha", f"{dashboard_url.rstrip('/')}/tenders/{tender_id}")])
+    return rows

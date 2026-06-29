@@ -107,7 +107,7 @@ async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
         tid = tw.get("tender", {}).get("id", "")
         await _application.bot.send_message(
             chat, messages.format_alert(tw),
-            reply_markup=to_markup(keyboards.item_buttons(tid)),
+            reply_markup=to_markup(keyboards.item_buttons(tid, settings.dashboard_url)),
             disable_web_page_preview=True,
         )
         try:

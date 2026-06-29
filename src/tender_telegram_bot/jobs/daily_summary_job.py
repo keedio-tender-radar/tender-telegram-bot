@@ -50,7 +50,9 @@ def build_daily_summary(api, limit: int | None = None) -> dict:
         {
             "tender_id": tw.get("tender", {}).get("id"),
             "text": _item_text(tw, i + 1),
-            "buttons": keyboards.item_buttons(tw.get("tender", {}).get("id", "")),
+            "buttons": keyboards.item_buttons(
+                tw.get("tender", {}).get("id", ""), settings.dashboard_url
+            ),
         }
         for i, tw in enumerate(items)
     ]
@@ -67,7 +69,7 @@ def build_urgent_alerts(api, days: int | None = None) -> list[dict]:
             {
                 "tender_id": tid,
                 "text": f"{text}\n🔗 {link}" if link else text,
-                "buttons": keyboards.item_buttons(tid),
+                "buttons": keyboards.item_buttons(tid, settings.dashboard_url),
             }
         )
     return alerts
