@@ -35,14 +35,17 @@ class TenderApiClient:
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
         """Envía la petición reintentando UNA vez ante timeout de lectura (cold start)."""
         last: httpx.TimeoutException | None = None
-        for attempt in range(2):
+        # Solo reintentamos GET (idempotente): despierta la máquina dormida y la 2ª acierta. Un POST
+        # largo (p. ej. /ask) NO se reintenta, para no bloquear el webhook el doble de tiempo.
+        attempts = 2 if method.upper() == "GET" else 1
+        for attempt in range(attempts):
             try:
                 with self._client() as client:
                     return client.request(method, path, **kwargs)
             except httpx.TimeoutException as exc:
                 last = exc
                 logger.warning(
-                    "Timeout en %s %s (intento %d/2); reintentando…", method, path, attempt + 1
+                    "Timeout en %s %s (intento %d/%d)", method, path, attempt + 1, attempts
                 )
         raise last  # type: ignore[misc]
 
