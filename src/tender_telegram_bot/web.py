@@ -205,5 +205,10 @@ async def webhook(request: Request) -> dict:
     if _application is None:
         return {"ok": False}
     data = await request.json()
-    await _application.process_update(Update.de_json(data, _application.bot))
+    # Encola el update y responde a Telegram al instante. Procesar en línea (`process_update`)
+    # bloquearía la respuesta del webhook hasta terminar el handler; con handlers largos
+    # (p. ej. /preguntar → extracción + LLM) Telegram supera su límite (~60s), da la entrega por
+    # fallida y REINTENTA el update (duplicados y "timeout"). La Application ya está arrancada
+    # (lifespan → start()), así que su consumidor de la cola procesa el update en segundo plano.
+    await _application.update_queue.put(Update.de_json(data, _application.bot))
     return {"ok": True}
