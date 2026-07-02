@@ -109,6 +109,18 @@ class TenderApiClient:
         resp.raise_for_status()
         return resp.json()
 
+    def market_overview(self) -> dict:
+        """Resumen global de mercado (adjudicaciones, baja media, líderes)."""
+        resp = self._request("GET", "/api/market/overview")
+        resp.raise_for_status()
+        return resp.json()
+
+    def market_competitors(self, limit: int = 5) -> list[dict]:
+        """Competidores más frecuentes (con cuota y baja)."""
+        resp = self._request("GET", "/api/market/competitors", params={"limit": limit})
+        resp.raise_for_status()
+        return resp.json().get("competitors", [])
+
     def get_score(self, tender_id: str) -> dict | None:
         """Último score de la licitación, o None si aún no tiene."""
         resp = self._request("GET", f"/api/tenders/{tender_id}/score")

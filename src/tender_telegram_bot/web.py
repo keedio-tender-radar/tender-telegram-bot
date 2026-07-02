@@ -110,6 +110,26 @@ async def send_digest(x_run_token: str | None = Header(default=None)) -> dict:
     return {"sent": (len(summary["items"]) + 1) * len(chats), "chats": len(chats)}
 
 
+@app.post("/send-market-digest")
+async def send_market_digest(x_run_token: str | None = Header(default=None)) -> dict:
+    """Informe periódico de inteligencia de mercado a los chats (para el scheduler semanal)."""
+    if settings.run_token and x_run_token != settings.run_token:
+        raise HTTPException(401, "Token de ejecución inválido o ausente.")
+    if not settings.telegram_chat_id:
+        raise HTTPException(400, "Falta TELEGRAM_CHAT_ID (destino del informe).")
+    if _application is None:
+        raise HTTPException(503, "Bot no inicializado.")
+    api = TenderApiClient()
+    overview = api.market_overview()
+    competitors = api.market_competitors(5)
+    text = messages.format_market_overview(overview, competitors)
+    chats = settings.telegram_chat_ids
+    for chat in chats:
+        await _application.bot.send_message(chat, text, disable_web_page_preview=True)
+    _report_run("market-digest", "ok", count=overview.get("awards"))
+    return {"sent": len(chats), "awards": overview.get("awards")}
+
+
 @app.post("/send-alerts")
 async def send_alerts(x_run_token: str | None = Header(default=None)) -> dict:
     """Envía alertas inmediatas de oportunidades GO no alertadas y las marca como alertadas."""

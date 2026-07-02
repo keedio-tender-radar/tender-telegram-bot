@@ -85,6 +85,24 @@ def test_format_market_context_empty():
     assert "Sin histórico" in out
 
 
+def test_format_market_overview():
+    from tender_telegram_bot.bot.messages import format_market_overview
+
+    ov = {
+        "awards": 120,
+        "avg_baja": 0.402,
+        "total_awarded": 233000000,
+        "top_competitor": {"supplier": "INETUM", "wins": 3, "share": 0.32},
+        "top_buyer": {"buyer": "Órgano X", "awards": 6},
+        "top_cpv_division": {"cpv_division": "72", "awards": 72},
+    }
+    out = format_market_overview(ov, [{"supplier": "SEIDOR", "wins": 5, "share": 0.079}])
+    assert "Inteligencia de mercado" in out
+    assert "40.2%" in out
+    assert "INETUM" in out
+    assert "SEIDOR" in out
+
+
 def test_format_stats():
     from tender_telegram_bot.bot.messages import format_stats
 

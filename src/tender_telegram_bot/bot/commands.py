@@ -27,7 +27,7 @@ _HELP = (
     "/urgentes — cierres próximos\n"
     "/licitacion <id> — ficha\n"
     "/preguntar <id> <pregunta> — pregunta al pliego\n"
-    "/mercado <id> — quién suele ganar + baja esperada\n"
+    "/mercado [id] — inteligencia de mercado (global, o de un expediente)\n"
     "/buscar <palabras> — busca licitaciones\n"
     "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
@@ -147,11 +147,16 @@ async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 @safe
 async def cmd_mercado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    api = TenderApiClient()
+    # Sin id → resumen global de mercado; con id → contexto competitivo del expediente.
     if not context.args:
-        await update.effective_chat.send_message("Uso: /mercado <id>")
+        ov = api.market_overview()
+        competitors = api.market_competitors(5)
+        await update.effective_chat.send_message(
+            messages.format_market_overview(ov, competitors), disable_web_page_preview=True
+        )
         return
     tender_id = context.args[0]
-    api = TenderApiClient()
     try:
         tender = api.get_tender(tender_id)
     except Exception:  # noqa: BLE001

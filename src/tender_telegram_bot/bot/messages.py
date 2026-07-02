@@ -119,6 +119,36 @@ def format_market_context(tender: dict, ctx: dict) -> str:
     return "\n".join(lines)
 
 
+def format_market_overview(ov: dict, competitors: list[dict] | None = None) -> str:
+    """Resumen global de mercado para /mercado (sin id) y el digest de mercado."""
+    baja = ov.get("avg_baja")
+    baja_txt = f"{baja * 100:.1f}%" if baja is not None else "s/d"
+    lines = [
+        "📊 Inteligencia de mercado",
+        f"Adjudicaciones: {ov.get('awards', 0)} · baja media: {baja_txt}",
+        f"Importe total: {_money(ov.get('total_awarded'))}",
+    ]
+    tc = ov.get("top_competitor") or {}
+    tb = ov.get("top_buyer") or {}
+    tcpv = ov.get("top_cpv_division") or {}
+    if tc.get("supplier"):
+        cuota = tc.get("share")
+        cuota_txt = f" ({cuota * 100:.0f}% cuota)" if cuota is not None else ""
+        lines.append(f"Top adjudicatario: {tc['supplier']} — {tc.get('wins')} contr{cuota_txt}")
+    if tb.get("buyer"):
+        lines.append(f"Top comprador: {tb['buyer'][:45]} ({tb.get('awards')})")
+    if tcpv.get("cpv_division"):
+        lines.append(f"CPV líder: {tcpv['cpv_division']} ({tcpv.get('awards')} adj)")
+    if competitors:
+        lines.append("")
+        lines.append("Competidores frecuentes:")
+        for c in competitors[:5]:
+            cuota = c.get("share")
+            ct = f" · {cuota * 100:.0f}% cuota" if cuota is not None else ""
+            lines.append(f"• {c.get('supplier')} — {c.get('wins')} contr{ct}")
+    return "\n".join(lines)
+
+
 def format_stats(stats: dict) -> str:
     """Resumen de estado del sistema para /estado."""
     by_source = stats.get("by_source", {}) or {}
