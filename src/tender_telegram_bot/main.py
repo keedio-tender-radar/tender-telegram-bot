@@ -37,6 +37,7 @@ def build_application() -> Application:
     app.add_handler(CommandHandler("buscar", commands.cmd_buscar))
     app.add_handler(CommandHandler("licitacion", commands.cmd_licitacion))
     app.add_handler(CommandHandler("preguntar", commands.cmd_preguntar))
+    app.add_handler(CommandHandler("mercado", commands.cmd_mercado))
     app.add_handler(CallbackQueryHandler(on_action))
     app.add_error_handler(_on_error)
     return app

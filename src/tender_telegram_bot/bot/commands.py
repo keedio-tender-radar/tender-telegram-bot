@@ -27,6 +27,7 @@ _HELP = (
     "/urgentes — cierres próximos\n"
     "/licitacion <id> — ficha\n"
     "/preguntar <id> <pregunta> — pregunta al pliego\n"
+    "/mercado <id> — quién suele ganar + baja esperada\n"
     "/buscar <palabras> — busca licitaciones\n"
     "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
@@ -142,6 +143,24 @@ async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if link:
         text += f"\n🔗 {link}"
     await update.effective_chat.send_message(text, disable_web_page_preview=True)
+
+
+@safe
+async def cmd_mercado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.effective_chat.send_message("Uso: /mercado <id>")
+        return
+    tender_id = context.args[0]
+    api = TenderApiClient()
+    try:
+        tender = api.get_tender(tender_id)
+    except Exception:  # noqa: BLE001
+        await update.effective_chat.send_message("No encontré esa licitación.")
+        return
+    ctx = api.market_context(tender_id)
+    await update.effective_chat.send_message(
+        messages.format_market_context(tender, ctx), disable_web_page_preview=True
+    )
 
 
 @safe

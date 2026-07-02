@@ -103,6 +103,12 @@ class TenderApiClient:
         resp.raise_for_status()
         return resp.json()
 
+    def market_context(self, tender_id: str) -> dict:
+        """Contexto de mercado del expediente: quién suele ganar la categoría + baja esperada."""
+        resp = self._request("GET", f"/api/market/tender/{tender_id}/context")
+        resp.raise_for_status()
+        return resp.json()
+
     def get_score(self, tender_id: str) -> dict | None:
         """Último score de la licitación, o None si aún no tiene."""
         resp = self._request("GET", f"/api/tenders/{tender_id}/score")

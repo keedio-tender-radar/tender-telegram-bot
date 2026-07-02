@@ -94,6 +94,31 @@ def format_answer(question: str, result: dict) -> str:
     return "\n".join([f"❓ {question}", "", answer, "", footer])
 
 
+def format_market_context(tender: dict, ctx: dict) -> str:
+    """Contexto de mercado de una licitación para /mercado: quién gana + baja esperada."""
+    title = (tender.get("title") or "")[:70]
+    lines = [f"📊 Mercado — {title}"]
+    sample = ctx.get("sample_size") or 0
+    if sample == 0:
+        lines.append("")
+        lines.append("Sin histórico de adjudicaciones para esta categoría CPV todavía.")
+        return "\n".join(lines)
+
+    baja = ctx.get("expected_baja")
+    baja_txt = f"{baja * 100:.1f}%" if baja is not None else "s/d"
+    lines.append(f"Categoría CPV {ctx.get('cpv_division') or 's/d'} · {sample} adjudicaciones")
+    lines.append(f"Baja esperada: {baja_txt}")
+    winners = ctx.get("likely_winners") or []
+    if winners:
+        lines.append("")
+        lines.append("Quién suele ganar esto:")
+        for w in winners[:5]:
+            b = w.get("avg_baja")
+            bt = f" · baja {b * 100:.0f}%" if b is not None else ""
+            lines.append(f"• {w.get('supplier')} — {w.get('wins')} contrato(s){bt}")
+    return "\n".join(lines)
+
+
 def format_stats(stats: dict) -> str:
     """Resumen de estado del sistema para /estado."""
     by_source = stats.get("by_source", {}) or {}

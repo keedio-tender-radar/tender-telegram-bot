@@ -61,6 +61,30 @@ def test_format_answer():
     assert "fake+llm" in out
 
 
+def test_format_market_context():
+    from tender_telegram_bot.bot.messages import format_market_context
+
+    out = format_market_context(
+        {"title": "Plataforma de datos"},
+        {
+            "cpv_division": "72",
+            "sample_size": 4,
+            "expected_baja": 0.38,
+            "likely_winners": [{"supplier": "INETUM ESPAÑA, S.A.", "wins": 3, "avg_baja": 0.02}],
+        },
+    )
+    assert "Mercado" in out
+    assert "38.0%" in out
+    assert "INETUM" in out
+
+
+def test_format_market_context_empty():
+    from tender_telegram_bot.bot.messages import format_market_context
+
+    out = format_market_context({"title": "X"}, {"sample_size": 0})
+    assert "Sin histórico" in out
+
+
 def test_format_stats():
     from tender_telegram_bot.bot.messages import format_stats
 
