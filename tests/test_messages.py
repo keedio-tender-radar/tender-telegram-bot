@@ -85,6 +85,23 @@ def test_format_market_context_empty():
     assert "Sin histórico" in out
 
 
+def test_format_competitor_profile():
+    from tender_telegram_bot.bot.messages import format_competitor_profile
+
+    out = format_competitor_profile({
+        "supplier": "INETUM ESPAÑA, S.A.",
+        "wins": 4, "total_awarded": 4865126, "share": 0.022, "avg_baja": 0.025,
+        "by_buyer": [{"buyer": "Órgano A", "awards": 2}],
+        "by_cpv": [{"cpv_division": "72", "awards": 3}],
+        "contracts": [{"title": "Soporte plataforma", "awarded_amount": 100000,
+                       "award_date": "2026-05-01"}],
+    })
+    assert "INETUM" in out
+    assert "Contratos: 4" in out
+    assert "Órgano A" in out
+    assert "Soporte plataforma" in out
+
+
 def test_format_market_overview():
     from tender_telegram_bot.bot.messages import format_market_overview
 

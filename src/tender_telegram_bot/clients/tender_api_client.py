@@ -121,6 +121,14 @@ class TenderApiClient:
         resp.raise_for_status()
         return resp.json().get("competitors", [])
 
+    def competitor_profile(self, name: str) -> dict | None:
+        """Perfil de un adjudicatario (None si no tiene adjudicaciones)."""
+        resp = self._request("GET", "/api/market/competitor", params={"name": name})
+        if resp.status_code == 404:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+
     def get_score(self, tender_id: str) -> dict | None:
         """Último score de la licitación, o None si aún no tiene."""
         resp = self._request("GET", f"/api/tenders/{tender_id}/score")

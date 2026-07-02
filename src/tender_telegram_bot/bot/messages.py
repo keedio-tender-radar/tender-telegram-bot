@@ -149,6 +149,34 @@ def format_market_overview(ov: dict, competitors: list[dict] | None = None) -> s
     return "\n".join(lines)
 
 
+def format_competitor_profile(p: dict) -> str:
+    """Perfil de un adjudicatario para /competidor."""
+    baja = p.get("avg_baja")
+    share = p.get("share")
+    lines = [
+        f"🏢 {p.get('supplier')}",
+        f"Contratos: {p.get('wins')} · Importe: {_money(p.get('total_awarded'))}"
+        + (f" · cuota {share * 100:.1f}%" if share is not None else "")
+        + (f" · baja media {baja * 100:.1f}%" if baja is not None else ""),
+    ]
+    buyers = p.get("by_buyer") or []
+    if buyers:
+        top = " · ".join(f"{b['buyer'][:30]} ({b['awards']})" for b in buyers[:4])
+        lines.append(f"Órganos: {top}")
+    cpvs = p.get("by_cpv") or []
+    if cpvs:
+        lines.append("CPV: " + " · ".join(f"{c['cpv_division']} ({c['awards']})" for c in cpvs[:5]))
+    contracts = p.get("contracts") or []
+    if contracts:
+        lines.append("")
+        lines.append("Últimos contratos:")
+        for c in contracts[:5]:
+            fecha = f" ({c['award_date']})" if c.get("award_date") else ""
+            titulo = (c.get("title") or "—")[:50]
+            lines.append(f"• {titulo} — {_money(c.get('awarded_amount'))}{fecha}")
+    return "\n".join(lines)
+
+
 def format_stats(stats: dict) -> str:
     """Resumen de estado del sistema para /estado."""
     by_source = stats.get("by_source", {}) or {}

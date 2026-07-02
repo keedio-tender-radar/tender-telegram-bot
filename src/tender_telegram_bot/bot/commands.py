@@ -28,6 +28,7 @@ _HELP = (
     "/licitacion <id> — ficha\n"
     "/preguntar <id> <pregunta> — pregunta al pliego\n"
     "/mercado [id] — inteligencia de mercado (global, o de un expediente)\n"
+    "/competidor <nombre> — perfil de un adjudicatario\n"
     "/buscar <palabras> — busca licitaciones\n"
     "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
@@ -165,6 +166,21 @@ async def cmd_mercado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     ctx = api.market_context(tender_id)
     await update.effective_chat.send_message(
         messages.format_market_context(tender, ctx), disable_web_page_preview=True
+    )
+
+
+@safe
+async def cmd_competidor(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args:
+        await update.effective_chat.send_message("Uso: /competidor <nombre de la empresa>")
+        return
+    name = " ".join(context.args)
+    prof = TenderApiClient().competitor_profile(name)
+    if not prof:
+        await update.effective_chat.send_message(f"Sin adjudicaciones para «{name}».")
+        return
+    await update.effective_chat.send_message(
+        messages.format_competitor_profile(prof), disable_web_page_preview=True
     )
 
 
