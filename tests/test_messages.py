@@ -23,6 +23,24 @@ def test_daily_digest_empty():
     assert "no hay oportunidades" in out.lower()
 
 
+def test_format_reminder_urgency_and_expediente():
+    from datetime import UTC, datetime, timedelta
+
+    dl = (datetime.now(UTC) + timedelta(days=2)).isoformat()
+    tw = {
+        "tender": {
+            "id": "x", "title": "Servicios X", "deadline": dl,
+            "budget_amount": 100000, "currency": "EUR",
+        },
+        "score": {"total": 85, "recommendation": "go"},
+    }
+    out = messages.format_reminder(tw, docs_ready=12)
+    assert "🟠" in out and "en 2 días" in out  # umbral ≤3 días
+    assert "Servicios X" in out
+    assert "12 documento(s) listos" in out
+    assert "sin preparar" in messages.format_reminder(tw, docs_ready=0)
+
+
 def test_daily_digest_with_stats(items):
     out = messages.format_daily_digest(items, stats={"analyzed": 184, "relevant": 9})
     assert "Analizadas: 184" in out

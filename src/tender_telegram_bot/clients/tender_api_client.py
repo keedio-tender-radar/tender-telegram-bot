@@ -95,6 +95,15 @@ class TenderApiClient:
     def mark_reminded(self, tender_id: str) -> None:
         self._request("POST", f"/api/tenders/{tender_id}/mark-reminded").raise_for_status()
 
+    def get_documents(self, tender_id: str) -> list[dict]:
+        """Ficheros del expediente (para indicar en el recordatorio si la oferta está lista)."""
+        try:
+            resp = self._request("GET", f"/api/tenders/{tender_id}/documents")
+            resp.raise_for_status()
+            return resp.json().get("files", [])
+        except Exception:  # noqa: BLE001 — el recordatorio no debe fallar por esto
+            return []
+
     def mark_alerted(self, tender_id: str) -> None:
         self._request("POST", f"/api/tenders/{tender_id}/mark-alerted").raise_for_status()
 

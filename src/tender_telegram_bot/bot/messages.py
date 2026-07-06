@@ -31,6 +31,51 @@ def _rec(score: dict | None) -> str:
     return _REC_LABEL.get(score.get("recommendation", ""), score.get("recommendation", "?"))
 
 
+def _days_left(value) -> int | None:
+    if not value:
+        return None
+    from datetime import UTC, datetime
+
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
+        return (dt - datetime.now(UTC)).days
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def format_reminder(tw: dict, docs_ready: int = 0) -> str:
+    """Recordatorio de cierre rico: urgencia por días restantes + estado del expediente."""
+    t = tw.get("tender", {})
+    s = tw.get("score")
+    days = _days_left(t.get("deadline"))
+    if days is None:
+        urg, cierre = "⏰", "cierre s/d"
+    elif days <= 0:
+        urg, cierre = "🔴", "cierra HOY"
+    elif days == 1:
+        urg, cierre = "🔴", "cierra MAÑANA"
+    elif days <= 3:
+        urg, cierre = "🟠", f"cierra en {days} días"
+    else:
+        urg, cierre = "🟡", f"cierra en {days} días"
+    score_txt = f" · Score {s['total']}/100 ({_rec(s)})" if s else ""
+    exp = (
+        f"📁 Expediente: {docs_ready} documento(s) listos"
+        if docs_ready
+        else "📁 Expediente: sin preparar"
+    )
+    return "\n".join([
+        f"{urg} {cierre} (en seguimiento)",
+        "",
+        t.get("title", "(sin título)"),
+        f"⏳ {_date(t.get('deadline'))}{score_txt}",
+        f"💶 {_money(t.get('budget_amount'), t.get('currency', 'EUR'))}",
+        exp,
+    ])
+
+
 def format_item(tw: dict, index: int | None = None) -> str:
     """Bloque de una oportunidad (para el radar diario)."""
     t = tw.get("tender", {})

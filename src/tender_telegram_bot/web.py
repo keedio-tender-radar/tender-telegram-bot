@@ -174,7 +174,8 @@ async def send_reminders(x_run_token: str | None = Header(default=None)) -> dict
     sent = 0
     for tw in api.get_closing_soon():
         tid = tw.get("tender", {}).get("id", "")
-        text = "⏰ Cierre próximo (en seguimiento)\n\n" + messages.format_urgent(tw)
+        docs_ready = len(api.get_documents(tid)) if tid else 0
+        text = messages.format_reminder(tw, docs_ready)
         link = messages.ficha_link(settings.dashboard_url, tid)
         for chat in chats:
             await _application.bot.send_message(
