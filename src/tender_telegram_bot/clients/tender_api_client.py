@@ -26,10 +26,14 @@ class TenderApiClient:
 
         `retries=2` reintenta errores de conexión (máquina despertando de scale-to-zero).
         """
+        # Si la API exige token en lecturas (READ_API_TOKEN), los servicios internos se
+        # autentican con RUN_TOKEN. Inofensivo si la API no lo exige.
+        headers = {"X-Run-Token": settings.run_token} if settings.run_token else {}
         return httpx.Client(
             base_url=self.base_url,
             timeout=self.timeout,
             transport=httpx.HTTPTransport(retries=2),
+            headers=headers,
         )
 
     def _request(self, method: str, path: str, **kwargs) -> httpx.Response:
