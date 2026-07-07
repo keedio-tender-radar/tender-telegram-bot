@@ -89,8 +89,15 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 @safe
 async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    stats = TenderApiClient().get_stats()
-    await update.effective_chat.send_message(messages.format_stats(stats))
+    api = TenderApiClient()
+    msg = messages.format_stats(api.get_stats())
+    try:  # línea de pipeline: no debe tumbar el estado si un endpoint falla
+        msg += "\n\n" + messages.format_pipeline_line(
+            api.get_expedientes(), api.get_outcomes_summary()
+        )
+    except Exception:  # noqa: BLE001
+        logger.warning("No se pudo añadir la línea de pipeline a /estado")
+    await update.effective_chat.send_message(msg)
 
 
 @safe

@@ -174,3 +174,11 @@ def test_format_outcomes():
     assert "Win-rate: 67%" in out
     assert "Ganadas: 2" in out and "Perdidas: 1" in out
     assert "120.000" in out
+
+
+def test_format_pipeline_line():
+    exp = [{"tender": {"id": "a"}}, {"tender": {"id": "b"}}]
+    line = messages.format_pipeline_line(exp, {"win_rate": 67, "presented": 3})
+    assert "2 expediente" in line and "win-rate 67%" in line
+    line2 = messages.format_pipeline_line(exp, {"win_rate": None, "presented": 3})
+    assert "3 presentada" in line2

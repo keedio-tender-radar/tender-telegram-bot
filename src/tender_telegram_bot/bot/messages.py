@@ -67,6 +67,17 @@ def format_expedientes(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def format_pipeline_line(expedientes: list[dict], outcomes: dict) -> str:
+    """Línea compacta del estado del pipeline (expedientes en curso + win-rate) para /estado."""
+    parts = [f"📂 {len(expedientes)} expediente(s) en curso"]
+    wr = (outcomes or {}).get("win_rate")
+    if wr is not None:
+        parts.append(f"🏆 win-rate {wr}%")
+    elif (outcomes or {}).get("presented"):
+        parts.append(f"{outcomes['presented']} presentada(s)")
+    return " · ".join(parts)
+
+
 def format_outcomes(s: dict) -> str:
     """Resumen del pipeline (win-rate) para Telegram."""
     if not s or s.get("total_decisions", 0) == 0:
