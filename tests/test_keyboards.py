@@ -26,3 +26,13 @@ def test_item_buttons_shape():
     label, data = rows[0][0]
     assert label == "✅ Interesa"
     assert data == "action:interested:t1"
+
+
+def test_outcome_buttons():
+    rows = keyboards.outcome_buttons("t1")
+    assert len(rows) == 1 and len(rows[0]) == 3  # Presentada / Ganada / Perdida
+    labels = [label for label, _ in rows[0]]
+    assert "🏆 Ganada" in labels and "❌ Perdida" in labels
+    # el callback de resultado se parsea (action res_*, tender_id)
+    _, data = rows[0][1]
+    assert keyboards.parse_callback(data) == ("res_ganada", "t1")

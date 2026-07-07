@@ -19,8 +19,21 @@ _BUTTONS = [
 ]
 
 
+# Botones para registrar el RESULTADO de una licitación presentada (→ decisión con outcome).
+_OUTCOME_BUTTONS = [
+    ("📤 Presentada", "res_presentada"),
+    ("🏆 Ganada", "res_ganada"),
+    ("❌ Perdida", "res_perdida"),
+]
+
+
 def callback_data(action: str, tender_id: str) -> str:
     return f"{ACTION_PREFIX}:{action}:{tender_id}"
+
+
+def outcome_buttons(tender_id: str) -> list[list[tuple[str, str]]]:
+    """Fila de botones para registrar el resultado de un expediente en curso."""
+    return [[(label, callback_data(action, tender_id)) for label, action in _OUTCOME_BUTTONS]]
 
 
 def parse_callback(data: str) -> tuple[str, str] | None:

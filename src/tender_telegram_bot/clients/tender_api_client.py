@@ -84,6 +84,15 @@ class TenderApiClient:
         resp.raise_for_status()
         return resp.json()
 
+    def record_decision(
+        self, tender_id: str, decision: str, outcome: str, actor: str | None = None
+    ) -> None:
+        """Registra el resultado de una licitación (decisión + outcome) desde Telegram."""
+        self._request(
+            "POST", f"/api/tenders/{tender_id}/decision",
+            json={"decision": decision, "outcome": outcome, "actor": actor},
+        ).raise_for_status()
+
     def get_pending_alerts(self, limit: int = 10) -> list[dict]:
         """Oportunidades GO aún no alertadas (para el push inmediato)."""
         resp = self._request("GET", "/api/tenders/pending-alerts", params={"limit": limit})

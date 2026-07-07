@@ -12,7 +12,7 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from tender_telegram_bot.bot import messages
+from tender_telegram_bot.bot import keyboards, messages
 from tender_telegram_bot.bot.handlers import to_markup
 from tender_telegram_bot.clients.tender_api_client import TenderApiClient
 from tender_telegram_bot.config import settings
@@ -103,9 +103,20 @@ async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 @safe
 async def cmd_expedientes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     rows = TenderApiClient().get_expedientes()
-    await update.effective_chat.send_message(
-        messages.format_expedientes(rows), disable_web_page_preview=True
+    chat = update.effective_chat
+    if not rows:
+        await chat.send_message(messages.format_expedientes([]))
+        return
+    ordered = sorted(
+        rows, key=lambda r: r.get("days_remaining") if r.get("days_remaining") is not None else 9999
     )
+    await chat.send_message("📂 Expedientes en curso — marca su resultado cuando lo sepas:")
+    for r in ordered:
+        await chat.send_message(
+            messages.format_expediente_item(r),
+            reply_markup=to_markup(keyboards.outcome_buttons(r["tender"]["id"])),
+            disable_web_page_preview=True,
+        )
 
 
 @safe

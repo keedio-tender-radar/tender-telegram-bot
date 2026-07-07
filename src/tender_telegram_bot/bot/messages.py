@@ -67,6 +67,15 @@ def format_expedientes(rows: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def format_expediente_item(r: dict) -> str:
+    """Línea de UN expediente (para enviarlo con botones de resultado)."""
+    t = r.get("tender", {})
+    pct = r.get("completeness", 0)
+    days = r.get("days_remaining")
+    cierre = f" · cierra en {days}d" if isinstance(days, int) and days >= 0 else ""
+    return f"{_progress_bar(pct)} {pct}% — {t.get('title', '')[:60]}{cierre}"
+
+
 def format_pipeline_line(expedientes: list[dict], outcomes: dict) -> str:
     """Línea compacta del estado del pipeline (expedientes en curso + win-rate) para /estado."""
     parts = [f"📂 {len(expedientes)} expediente(s) en curso"]

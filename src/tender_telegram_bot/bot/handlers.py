@@ -17,6 +17,13 @@ _ACTION_FEEDBACK = {
     "generate_report": "📄 Informe solicitado",
 }
 
+# Acciones de RESULTADO: registran una decisión con outcome (→ win-rate del pipeline).
+_OUTCOME_ACTIONS = {
+    "res_presentada": ("presentada", "📤 Marcada como presentada"),
+    "res_ganada": ("ganada", "🏆 ¡Registrada como GANADA!"),
+    "res_perdida": ("perdida", "❌ Registrada como perdida"),
+}
+
 
 def to_markup(buttons: list[list[tuple[str, str]]]) -> InlineKeyboardMarkup:
     """Convierte filas de (label, data) en un teclado inline. data http(s) = botón-enlace."""
@@ -40,7 +47,12 @@ async def on_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     action, tender_id = parsed
     actor = f"telegram:{query.from_user.id}" if query.from_user else None
     try:
-        TenderApiClient().post_action(tender_id, action, actor=actor)
-        await query.answer(_ACTION_FEEDBACK.get(action, "Registrado"))
+        if action in _OUTCOME_ACTIONS:
+            outcome, feedback = _OUTCOME_ACTIONS[action]
+            TenderApiClient().record_decision(tender_id, "GO", outcome, actor=actor)
+            await query.answer(feedback)
+        else:
+            TenderApiClient().post_action(tender_id, action, actor=actor)
+            await query.answer(_ACTION_FEEDBACK.get(action, "Registrado"))
     except Exception:  # noqa: BLE001
         await query.answer("No se pudo registrar la acción", show_alert=True)
