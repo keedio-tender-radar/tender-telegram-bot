@@ -174,10 +174,11 @@ async def cmd_licitacion(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except Exception:  # noqa: BLE001
         score = None
     text = messages.format_tender_detail(tender, score)
-    link = messages.ficha_link(settings.dashboard_url, tender_id)
-    if link:
-        text += f"\n🔗 {link}"
-    await update.effective_chat.send_message(text, disable_web_page_preview=True)
+    await update.effective_chat.send_message(
+        text,
+        reply_markup=to_markup(keyboards.ficha_buttons(tender_id, settings.dashboard_url)),
+        disable_web_page_preview=True,
+    )
 
 
 @safe

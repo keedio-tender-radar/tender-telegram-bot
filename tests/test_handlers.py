@@ -49,3 +49,25 @@ def test_on_action_records_plain_action(monkeypatch):
 
     assert calls["action"] == ("t2", "interested", "telegram:42")
     assert "decision" not in calls
+
+
+def test_on_action_prepare_offer(monkeypatch):
+    calls = {}
+
+    class FakeClient:
+        def generate_offer_drafts(self, tender_id):
+            calls["gen"] = tender_id
+
+        def post_action(self, *a, **k):
+            calls["action"] = True
+
+        def record_decision(self, *a, **k):
+            calls["decision"] = True
+
+    monkeypatch.setattr(handlers, "TenderApiClient", FakeClient)
+    update, query = _fake_update("action:prepare_offer:t9")
+    asyncio.run(handlers.on_action(update, None))
+
+    assert calls["gen"] == "t9"
+    assert "action" not in calls and "decision" not in calls
+    query.answer.assert_awaited()

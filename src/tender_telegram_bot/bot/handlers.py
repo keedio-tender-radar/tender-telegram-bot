@@ -47,7 +47,10 @@ async def on_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     action, tender_id = parsed
     actor = f"telegram:{query.from_user.id}" if query.from_user else None
     try:
-        if action in _OUTCOME_ACTIONS:
+        if action == "prepare_offer":
+            TenderApiClient().generate_offer_drafts(tender_id)
+            await query.answer("🛠️ Generando la oferta… tardará unos minutos.")
+        elif action in _OUTCOME_ACTIONS:
             outcome, feedback = _OUTCOME_ACTIONS[action]
             TenderApiClient().record_decision(tender_id, "GO", outcome, actor=actor)
             await query.answer(feedback)

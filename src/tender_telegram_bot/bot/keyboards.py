@@ -36,6 +36,15 @@ def outcome_buttons(tender_id: str) -> list[list[tuple[str, str]]]:
     return [[(label, callback_data(action, tender_id)) for label, action in _OUTCOME_BUTTONS]]
 
 
+def ficha_buttons(tender_id: str, dashboard_url: str = "") -> list[list[tuple[str, str]]]:
+    """Botones de la ficha (/licitacion): acciones + preparar oferta + enlace a la web."""
+    rows = item_buttons(tender_id)  # 6 acciones, 2 por fila
+    rows.append([("🛠️ Preparar oferta", callback_data("prepare_offer", tender_id))])
+    if dashboard_url:
+        rows.append([("📄 Ficha web", f"{dashboard_url.rstrip('/')}/tenders/{tender_id}")])
+    return rows
+
+
 def parse_callback(data: str) -> tuple[str, str] | None:
     """Devuelve (action, tender_id) si el callback es de acción, si no None."""
     parts = (data or "").split(":", 2)

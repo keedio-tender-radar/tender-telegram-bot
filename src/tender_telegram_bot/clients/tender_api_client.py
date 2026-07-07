@@ -93,6 +93,12 @@ class TenderApiClient:
             json={"decision": decision, "outcome": outcome, "actor": actor},
         ).raise_for_status()
 
+    def generate_offer_drafts(self, tender_id: str) -> None:
+        """Lanza la generación de borradores de oferta (asíncrona, devuelve 202)."""
+        self._request(
+            "POST", f"/api/tenders/{tender_id}/generate-offer-drafts"
+        ).raise_for_status()
+
     def get_pending_alerts(self, limit: int = 10) -> list[dict]:
         """Oportunidades GO aún no alertadas (para el push inmediato)."""
         resp = self._request("GET", "/api/tenders/pending-alerts", params={"limit": limit})

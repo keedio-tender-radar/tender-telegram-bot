@@ -36,3 +36,11 @@ def test_outcome_buttons():
     # el callback de resultado se parsea (action res_*, tender_id)
     _, data = rows[0][1]
     assert keyboards.parse_callback(data) == ("res_ganada", "t1")
+
+
+def test_ficha_buttons_includes_prepare_and_link():
+    rows = keyboards.ficha_buttons("t1", "https://dash")
+    flat = [(label, data) for row in rows for label, data in row]
+    assert any(label == "🛠️ Preparar oferta" and data == "action:prepare_offer:t1"
+               for label, data in flat)
+    assert any(data.startswith("https://dash/tenders/t1") for _, data in flat)
