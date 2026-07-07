@@ -72,6 +72,18 @@ class TenderApiClient:
         resp.raise_for_status()
         return resp.json()
 
+    def get_expedientes(self) -> list[dict]:
+        """Bandeja de expedientes en curso (seguimiento) con su completitud."""
+        resp = self._request("GET", "/api/tenders/expedientes")
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_outcomes_summary(self) -> dict:
+        """Resumen del pipeline: presentadas/ganadas/perdidas, win-rate y valor adjudicado."""
+        resp = self._request("GET", "/api/tenders/outcomes-summary")
+        resp.raise_for_status()
+        return resp.json()
+
     def get_pending_alerts(self, limit: int = 10) -> list[dict]:
         """Oportunidades GO aún no alertadas (para el push inmediato)."""
         resp = self._request("GET", "/api/tenders/pending-alerts", params={"limit": limit})

@@ -30,6 +30,8 @@ _HELP = (
     "/mercado [id] — inteligencia de mercado (global, o de un expediente)\n"
     "/competidor <nombre> — perfil de un adjudicatario\n"
     "/buscar <palabras> — busca licitaciones\n"
+    "/expedientes — expedientes en curso y su progreso\n"
+    "/resultados — win-rate del pipeline (presentadas/ganadas/perdidas)\n"
     "/estado — estado del radar\n"
     "/ayuda — esta ayuda"
 )
@@ -89,6 +91,20 @@ async def cmd_top(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def cmd_estado(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     stats = TenderApiClient().get_stats()
     await update.effective_chat.send_message(messages.format_stats(stats))
+
+
+@safe
+async def cmd_expedientes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    rows = TenderApiClient().get_expedientes()
+    await update.effective_chat.send_message(
+        messages.format_expedientes(rows), disable_web_page_preview=True
+    )
+
+
+@safe
+async def cmd_resultados(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    summary = TenderApiClient().get_outcomes_summary()
+    await update.effective_chat.send_message(messages.format_outcomes(summary))
 
 
 @safe

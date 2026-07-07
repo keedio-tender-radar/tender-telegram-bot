@@ -150,3 +150,27 @@ def test_format_stats():
     assert "Estado del radar" in out
     assert "GO: 4" in out
     assert "placsp: 8" in out
+
+
+def test_format_expedientes():
+    rows = [
+        {"tender": {"id": "a", "title": "Plataforma de datos"}, "completeness": 100,
+         "days_remaining": 5},
+        {"tender": {"id": "b", "title": "Otra licitacion"}, "completeness": 33,
+         "days_remaining": 20},
+    ]
+    out = messages.format_expedientes(rows)
+    assert "Expedientes en curso" in out
+    assert "100%" in out and "33%" in out
+    assert "cierra en 5d" in out
+    assert "No hay expedientes" in messages.format_expedientes([])
+
+
+def test_format_outcomes():
+    assert "Aún no hay decisiones" in messages.format_outcomes({"total_decisions": 0})
+    s = {"total_decisions": 3, "presented": 3, "won": 2, "lost": 1, "win_rate": 67,
+         "won_value": 120000}
+    out = messages.format_outcomes(s)
+    assert "Win-rate: 67%" in out
+    assert "Ganadas: 2" in out and "Perdidas: 1" in out
+    assert "120.000" in out

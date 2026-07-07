@@ -45,6 +45,48 @@ def _days_left(value) -> int | None:
         return None
 
 
+def _progress_bar(pct: int) -> str:
+    filled = max(0, min(5, round(pct / 20)))
+    return "▰" * filled + "▱" * (5 - filled)
+
+
+def format_expedientes(rows: list[dict]) -> str:
+    """Bandeja de expedientes en curso (progreso hacia la oferta) para Telegram."""
+    if not rows:
+        return "📂 No hay expedientes en curso. Marca una licitación como «Interesa» para empezar."
+    ordered = sorted(
+        rows, key=lambda r: r.get("days_remaining") if r.get("days_remaining") is not None else 9999
+    )
+    lines = ["📂 Expedientes en curso", ""]
+    for r in ordered:
+        t = r.get("tender", {})
+        pct = r.get("completeness", 0)
+        days = r.get("days_remaining")
+        cierre = f" · cierra en {days}d" if isinstance(days, int) and days >= 0 else ""
+        lines.append(f"{_progress_bar(pct)} {pct}% — {t.get('title', '')[:48]}{cierre}")
+    return "\n".join(lines)
+
+
+def format_outcomes(s: dict) -> str:
+    """Resumen del pipeline (win-rate) para Telegram."""
+    if not s or s.get("total_decisions", 0) == 0:
+        return (
+            "📊 Aún no hay decisiones registradas. Marca el resultado "
+            "(presentada / ganada / perdida) en la ficha de cada licitación."
+        )
+    wr = s.get("win_rate")
+    lines = [
+        "📊 Resultados del pipeline",
+        "",
+        f"Presentadas: {s.get('presented', 0)}",
+        f"Ganadas: {s.get('won', 0)} · Perdidas: {s.get('lost', 0)}",
+        f"Win-rate: {wr}%" if wr is not None else "Win-rate: s/d (sin decididas aún)",
+    ]
+    if s.get("won_value"):
+        lines.append(f"Valor adjudicado: {_money(s['won_value'])}")
+    return "\n".join(lines)
+
+
 def format_reminder(tw: dict, docs_ready: int = 0) -> str:
     """Recordatorio de cierre rico: urgencia por días restantes + estado del expediente."""
     t = tw.get("tender", {})
